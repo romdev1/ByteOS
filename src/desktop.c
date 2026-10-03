@@ -399,6 +399,19 @@ void sys_shutdown(void)
     }
 }
 
+void sys_reboot(void)
+{
+    uint8_t good = 0x02;
+    while (good & 0x02) good = inb(0x64);
+    outb(0x64, 0xFE);
+    __asm__ __volatile__("lidt (%%rax)" : : "a"(0));
+    __asm__ __volatile__("int $3");
+    for (;;)
+    {
+        __asm__ __volatile__("cli; hlt");
+    }
+}
+
 
 /* ============================================================
    RTC
@@ -574,15 +587,18 @@ void draw_rect_buf(
     if (w <= 0 || h <= 0)
         return;
 
-    for (int i = 0; i < h; i++)
-    {
-        for (int j = 0; j < w; j++)
-        {
-            draw_pixel_buf(
-                x + j,
-                y + i,
-                color
-            );
+    int x0 = x < 0 ? 0 : x;
+    int y0 = y < 0 ? 0 : y;
+    int x1 = x + w; if (x1 > (int)scr_width) x1 = (int)scr_width;
+    int y1 = y + h; if (y1 > (int)scr_height) y1 = (int)scr_height;
+    int span_w = x1 - x0;
+    if (span_w <= 0 || y0 >= y1)
+        return;
+
+    for (int py = y0; py < y1; py++) {
+        uint32_t *row = backbuffer + (uint32_t)py * scr_width + (uint32_t)x0;
+        for (int i = 0; i < span_w; i++) {
+            row[i] = color;
         }
     }
 }
@@ -937,136 +953,77 @@ void render_start_menu(int single_click)
     if (!start_menu_open)
         return;
 
-    int menu_w = 180;
-    int menu_h = 90;
+    int menu_w = 200;
+    int item_h = 26;
+    int item_count = 6;
+    int menu_h = item_count * item_h + 14;
 
-    int menu_x = 4;
+    int menu_x = 6;
     int menu_y = 28;
 
-    draw_rounded_rect_buf(
-        menu_x,
-        menu_y,
-        menu_w,
-        menu_h,
-        8,
-        COLOR_MENU_BG
-    );
+    /* Drop shadow for menu */
+    draw_rounded_rect_alpha(menu_x - 3, menu_y, menu_w + 6, menu_h + 6, 12, 0x00000000, 35);
+    draw_rounded_rect_alpha(menu_x - 1, menu_y, menu_w + 2, menu_h + 2, 10, COLOR_TOPBAR_BORDER, 160);
+    draw_rounded_rect_buf(menu_x, menu_y, menu_w, menu_h, 10, COLOR_MENU_BG);
 
-    draw_rounded_rect_alpha(
-        menu_x - 1,
-        menu_y - 1,
-        menu_w + 2,
-        menu_h + 2,
-        9,
-        COLOR_TOPBAR_BORDER,
-        180
-    );
+    static const char *menu_labels[] = {
+        "About This System",
+        "System Settings...",
+        "Terminal",
+        "Calculator",
+        "Restart Machine...",
+        "Shut Down..."
+    };
 
-    int item_x =
-        menu_x + 6;
+    int item_x = menu_x + 6;
+    int item_w = menu_w - 12;
 
-    int item_w =
-        menu_w - 12;
+    int hovered_item = -1;
 
-    int item_h = 30;
-    int gap = 6;
-
-    int about_y =
-        menu_y + 6;
-
-    int shutdown_y =
-        about_y +
-        item_h +
-        gap;
-
-    int mouse_over_about =
-        (
-            mouse_x >= item_x &&
-            mouse_x <= item_x + item_w &&
-            mouse_y >= about_y &&
-            mouse_y <= about_y + item_h
-        );
-
-    int mouse_over_shutdown =
-        (
-            mouse_x >= item_x &&
-            mouse_x <= item_x + item_w &&
-            mouse_y >= shutdown_y &&
-            mouse_y <= shutdown_y + item_h
-        );
-
-    /*
-     * About
-     */
-
-    if (mouse_over_about)
-    {
-        uint32_t bg =
-            mouse_left_clicked
-                ? COLOR_MENU_ITEM_PRESSED
-                : COLOR_MENU_ITEM_HOVER;
-
-        draw_rounded_rect_buf(
-            item_x,
-            about_y,
-            item_w,
-            item_h,
-            10,
-            bg
-        );
-    }
-
-    draw_string(
-        "About System",
-        item_x + 8,
-        about_y + 7,
-        COLOR_BLACK,
-        backbuffer,
-        scr_width
-    );
-
-    /*
-     * Shutdown
-     */
-
-    if (mouse_over_shutdown)
-    {
-        uint32_t bg =
-            mouse_left_clicked
-                ? COLOR_MENU_ITEM_PRESSED
-                : COLOR_MENU_ITEM_HOVER;
-
-        draw_rounded_rect_buf(
-            item_x,
-            shutdown_y,
-            item_w,
-            item_h,
-            10,
-            bg
-        );
-    }
-
-    draw_string(
-        "Shut Down...",
-        item_x + 8,
-        shutdown_y + 7,
-        0x00FF3B30,
-        backbuffer,
-        scr_width
-    );
-
-    if (single_click)
-    {
-        if (mouse_over_about)
-        {
-            start_menu_open = 0;
-
-            toggle_about_app();
-            win_bring_to_front(WIN_ID_ABOUT);
+    for (int i = 0; i < item_count; i++) {
+        int iy = menu_y + 6 + i * item_h;
+        int hover = (mouse_x >= item_x && mouse_x <= item_x + item_w &&
+                     mouse_y >= iy && mouse_y <= iy + item_h);
+        if (hover) {
+            hovered_item = i;
+            uint32_t bg = mouse_left_clicked ? COLOR_MENU_ITEM_PRESSED : COLOR_MENU_ITEM_HOVER;
+            draw_rounded_rect_buf(item_x, iy, item_w, item_h, 6, bg);
         }
-        else if (mouse_over_shutdown)
-        {
-            sys_shutdown();
+
+        uint32_t text_color = (i >= 4) ? 0x00D70015 : COLOR_BLACK;
+        draw_string(menu_labels[i], item_x + 8, iy + 5, text_color, backbuffer, scr_width);
+
+        /* Separator line before Restart */
+        if (i == 3) {
+            draw_rect_buf(item_x + 4, iy + item_h + 1, item_w - 8, 1, 0x00DCDCDE);
+        }
+    }
+
+    if (single_click && hovered_item >= 0) {
+        start_menu_open = 0;
+        switch (hovered_item) {
+            case 0:
+                toggle_about_app();
+                win_bring_to_front(WIN_ID_ABOUT);
+                break;
+            case 1:
+                toggle_settings_app();
+                win_bring_to_front(WIN_ID_SETTINGS);
+                break;
+            case 2:
+                toggle_terminal_app();
+                win_bring_to_front(WIN_ID_TERMINAL);
+                break;
+            case 3:
+                toggle_calc_app();
+                win_bring_to_front(WIN_ID_CALC);
+                break;
+            case 4:
+                sys_reboot();
+                break;
+            case 5:
+                sys_shutdown();
+                break;
         }
     }
 }
@@ -1212,18 +1169,25 @@ void render_layer_topbar(int single_click)
         24,
         0,
         COLOR_TOPBAR,
-        190
+        210
     );
 
+    /* Clean 1px bottom border for topbar */
+    draw_rect_buf(0, 24, scr_width, 1, COLOR_TOPBAR_BORDER);
+
     /*
-     * Start icon
+     * Start icon / Logo button
      */
 
     int start_btn_x = 8;
     int start_btn_y = 3;
-
     int start_btn_w = 18;
     int start_btn_h = 18;
+
+    int hover_start = (mouse_x >= 0 && mouse_x <= 84 && mouse_y >= 0 && mouse_y <= 24);
+    if (hover_start) {
+        draw_rounded_rect_buf(4, 2, 80, 20, 5, COLOR_MENU_ITEM_HOVER);
+    }
 
     if (start_icon_bmp_start)
     {
@@ -1250,12 +1214,35 @@ void render_layer_topbar(int single_click)
 
     draw_string(
         "igorOS",
-        32,
+        30,
         4,
         COLOR_BLACK,
         backbuffer,
         scr_width
     );
+
+    /* Active Application Title */
+    const char *active_app = "Finder";
+    if (g_win_z_order[WIN_COUNT - 1] >= 0 && g_win_rect[g_win_z_order[WIN_COUNT - 1]].open) {
+        switch (g_win_z_order[WIN_COUNT - 1]) {
+            case WIN_ID_FILE:     active_app = "Finder"; break;
+            case WIN_ID_TERMINAL: active_app = "Terminal"; break;
+            case WIN_ID_DOOM:     active_app = "DOOM"; break;
+            case WIN_ID_CALC:     active_app = "Calculator"; break;
+            case WIN_ID_SETTINGS: active_app = "Settings"; break;
+            case WIN_ID_MUSIC:    active_app = "Music"; break;
+            case WIN_ID_ABOUT:    active_app = "About"; break;
+        }
+    }
+    draw_string(active_app, 92, 4, 0x00007AFF, backbuffer, scr_width);
+
+    /* macOS menus */
+    int menu_offset = 92 + font_text_width(active_app) + 16;
+    draw_string("File", menu_offset, 4, 0x003A3A3C, backbuffer, scr_width);
+    draw_string("Edit", menu_offset + 38, 4, 0x003A3A3C, backbuffer, scr_width);
+    draw_string("View", menu_offset + 76, 4, 0x003A3A3C, backbuffer, scr_width);
+    draw_string("Window", menu_offset + 118, 4, 0x003A3A3C, backbuffer, scr_width);
+    draw_string("Help", menu_offset + 176, 4, 0x003A3A3C, backbuffer, scr_width);
 
     /*
      * Start button click
@@ -1263,10 +1250,7 @@ void render_layer_topbar(int single_click)
 
     if (
         single_click &&
-        mouse_x >= 0 &&
-        mouse_x <= 90 &&
-        mouse_y >= 0 &&
-        mouse_y <= 24
+        hover_start
     )
     {
         start_menu_open =
@@ -1329,7 +1313,7 @@ void render_layer_topbar(int single_click)
     datetime_str[11] = 0;
 
     int clock_x =
-        scr_width - 125;
+        scr_width - 120;
 
     draw_string(
         datetime_str,
@@ -1339,6 +1323,10 @@ void render_layer_topbar(int single_click)
         backbuffer,
         scr_width
     );
+
+    /* Power status */
+    int pwr_x = clock_x - 76;
+    draw_string("PWR 100%", pwr_x, 4, 0x0034C759, backbuffer, scr_width);
 
     /*
      * Volume

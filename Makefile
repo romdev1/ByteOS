@@ -42,6 +42,9 @@ DOOM_ENGINE_SRCS = \
 
 OBJS = \
     build/kernel/kernel.o \
+    build/kernel/gdt.o \
+    build/kernel/pmm.o \
+    build/kernel/kheap.o \
     build/kernel/graphics.o \
     build/kernel/idt.o \
     build/kernel/pic.o \
@@ -159,6 +162,7 @@ build/igorOS.iso: build/kernel.elf boot/limine/limine.conf boot/limine/limine.cf
 		--eltorito-alt-boot \
 		ready \
 		-o build/igorOS.iso
+	chmod +x boot/limine/limine 2>/dev/null || true
 	./boot/limine/limine bios-install build/igorOS.iso
 
 # ==========================================
@@ -188,6 +192,7 @@ build/igorOS.img: build/kernel.elf boot/limine/limine.conf boot/limine/limine.cf
 	mcopy -o -i $@@@1M boot/limine/limine.cfg ::/EFI/BOOT/limine.cfg
 	mcopy -o -i $@@@1M boot/limine/limine-bios.sys ::/boot/limine/limine-bios.sys
 	mcopy -o -i $@@@1M boot/limine/BOOTX64.EFI ::/EFI/BOOT/BOOTX64.EFI
+	chmod +x boot/limine/limine 2>/dev/null || true
 	./boot/limine/limine bios-install $@
 
 # ==========================================

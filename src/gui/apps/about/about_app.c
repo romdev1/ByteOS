@@ -2,6 +2,8 @@
 #include "gui/desktop.h"
 #include "gui/font.h"
 #include "gui/bmp_loader.h"
+#include "kernel/pmm.h"
+#include "drivers/system/sound_manager.h"
 
 #include <stdint.h>
 
@@ -423,66 +425,43 @@ void render_about_app_window(
 
 
     /* ======================================
-       Text
+       Text / Specifications
        ====================================== */
 
-    int text_x =
-        image_x +
-        image_size +
-        38;
+    int text_x = image_x + image_size + 32;
+    int text_y = content_top + 36;
 
-    int text_y =
-        content_top +
-        50;
+    draw_string("IgorOS Nord", text_x, text_y, 0x001C1C1E, buf, scr_w);
 
-
-    draw_string(
-        "igorOS Revolution",
-        text_x,
-        text_y,
-        0x001C1C1E,
-        buf,
-        scr_w
-    );
-
-
-    text_y += 30;
-
-
-    draw_string(
-        "Version 0.5",
-        text_x,
-        text_y,
-        0x001C1C1E,
-        buf,
-        scr_w
-    );
-
+    text_y += 24;
+    draw_string("Version 0.5.2 (x86_64)", text_x, text_y, 0x00007AFF, buf, scr_w);
 
     text_y += 22;
+    uint64_t ram_mb = pmm_get_total_memory() / (1024 * 1024);
+    char ram_str[32] = "Memory: ";
+    int ri = 8;
+    if (ram_mb == 0) ram_str[ri++] = '0';
+    else {
+        char rev[12]; int rk = 0; uint64_t rv = ram_mb;
+        while (rv > 0) { rev[rk++] = '0' + (rv % 10); rv /= 10; }
+        while (rk > 0) ram_str[ri++] = rev[--rk];
+    }
+    ram_str[ri++] = ' '; ram_str[ri++] = 'M'; ram_str[ri++] = 'B'; ram_str[ri] = 0;
+    draw_string(ram_str, text_x, text_y, 0x003A3A3C, buf, scr_w);
 
+    text_y += 20;
+    char snd_str[48] = "Audio: ";
+    const char *dev_name = sound_get_device_name();
+    int si = 7;
+    for (int k = 0; dev_name[k] && si < 47; k++) snd_str[si++] = dev_name[k];
+    snd_str[si] = 0;
+    draw_string(snd_str, text_x, text_y, 0x003A3A3C, buf, scr_w);
 
-    draw_string(
-        "by igoreeek_228",
-        text_x,
-        text_y,
-        0x008E8E93,
-        buf,
-        scr_w
-    );
+    text_y += 20;
+    draw_string("Kernel: Limine Bare-Metal", text_x, text_y, 0x008E8E93, buf, scr_w);
 
-
-    text_y += 22;
-
-
-    draw_string(
-        "2026",
-        text_x,
-        text_y,
-        0x008E8E93,
-        buf,
-        scr_w
-    );
+    text_y += 20;
+    draw_string("Developer: Igoreeek228", text_x, text_y, 0x008E8E93, buf, scr_w);
 
 
     /* ======================================
