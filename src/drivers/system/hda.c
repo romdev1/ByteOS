@@ -18,7 +18,7 @@ static inline uint32_t inl(uint16_t port) {
 #define GCTL     0x08
 #define STATESTS 0x0E
 
-#include "kernel/pmm.h"
+#include "pmm.h"
 
 static uint64_t hda_mmio_base = 0;
 

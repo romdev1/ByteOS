@@ -28,7 +28,7 @@ static inline void outw(uint16_t port, uint16_t val) {
     __asm__ volatile ("outw %0, %1" : : "a"(val), "Nd"(port));
 }
 
-#include "kernel/pmm.h"
+#include "pmm.h"
 
 typedef struct {
     uint32_t phys_addr;

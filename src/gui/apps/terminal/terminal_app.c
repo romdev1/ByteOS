@@ -10,7 +10,7 @@
 #include "gui/font.h"
 #include "gui/anim/genie_anim.h"
 #include "gui/anim/win_chrome.h"
-#include "kernel/pmm.h"
+#include "pmm.h"
 #include "kernel/timer.h"
 #include "drivers/system/sound_manager.h"
 

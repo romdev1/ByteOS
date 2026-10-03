@@ -2,7 +2,7 @@
 #include "gui/desktop.h"
 #include "gui/font.h"
 #include "gui/bmp_loader.h"
-#include "kernel/pmm.h"
+#include "pmm.h"
 #include "drivers/system/sound_manager.h"
 
 #include <stdint.h>

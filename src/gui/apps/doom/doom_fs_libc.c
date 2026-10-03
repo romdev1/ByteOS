@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-#include "kernel/kheap.h"
+#include "kheap.h"
 
 /* ---- heap backed by real kernel heap allocator ---- */
 void *malloc(size_t n) {

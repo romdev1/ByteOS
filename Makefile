@@ -9,7 +9,7 @@ NASM = nasm
 CFLAGS = -m64 -ffreestanding -fno-stack-protector -fno-pie -mno-red-zone \
          -mcmodel=kernel -O2 -Wall -Wextra -Wno-unused -Wno-maybe-uninitialized \
          -Isrc/gui/apps/doom/fs_include \
-         -Iinclude -Ikernel -Isrc -Ikernel/include \
+         -I. -Iinclude -Ikernel -Isrc -Ikernel/include \
          -Isrc/gui/apps/doom -Isrc/gui/apps/doom/engine \
          -DDOOMGENERIC_RESX=320 -DDOOMGENERIC_RESY=200
 
