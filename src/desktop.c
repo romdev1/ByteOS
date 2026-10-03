@@ -1264,35 +1264,11 @@ void render_layer_topbar(int single_click)
     );
 
     /*
-     * Battery icon + percentage (matches photo1.png)
-     */
-    int bat_w = 20;
-    int bat_h = 11;
-    int bat_x = clock_x - 62;
-    int bat_y = 6;
-
-    /* Battery outline */
-    draw_rounded_rect_buf(bat_x, bat_y, bat_w, bat_h, 2, 0x0048484A);
-    /* Terminal nipple */
-    draw_rect_buf(bat_x + bat_w, bat_y + 3, 2, 5, 0x0048484A);
-    /* Battery fill (~70% charge) */
-    draw_rect_buf(bat_x + 2, bat_y + 2, 12, bat_h - 4, 0x0034C759);
-
-    draw_string(
-        "70%",
-        bat_x + bat_w + 5,
-        5,
-        COLOR_BLACK,
-        backbuffer,
-        scr_width
-    );
-
-    /*
      * Volume
      */
     int vol_btn_w = 18;
     int vol_btn_h = 18;
-    int vol_btn_x = bat_x - 74;
+    int vol_btn_x = clock_x - 84;
     int vol_btn_y = 3;
 
     int hover_vol = (mouse_x >= vol_btn_x - 4 && mouse_x <= vol_btn_x + 54 && mouse_y >= 0 && mouse_y <= 24);
