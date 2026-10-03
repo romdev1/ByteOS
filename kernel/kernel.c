@@ -445,7 +445,7 @@ void kernel_main(void) {
         "Checking hardware...",
         "Initializing input devices...",
         "Preparing interface...",
-        "Starting igorOS..."
+        "Starting ByteOS..."
     };
 
     int spin_frame = 0;

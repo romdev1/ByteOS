@@ -1,4 +1,4 @@
-name: Build IgorOS ISO
+name: Build ByteOS ISO
 
 on:
   push:
@@ -18,12 +18,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc nasm xorriso mtools parted dosfstools
 
-      - name: Compile IgorOS Kernel and ISO
+      - name: Compile ByteOS Kernel and ISO
         run: |
           make iso
 
       - name: Upload bootable ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: igorOS-iso
-          path: build/igorOS.iso
+          name: ByteOS-iso
+          path: build/byteOS.iso

@@ -431,7 +431,7 @@ void render_about_app_window(
     int text_x = image_x + image_size + 32;
     int text_y = content_top + 36;
 
-    draw_string("IgorOS Nord", text_x, text_y, 0x001C1C1E, buf, scr_w);
+    draw_string("ByteOS Nord", text_x, text_y, 0x001C1C1E, buf, scr_w);
 
     text_y += 24;
     draw_string("Version 0.5.2 (x86_64)", text_x, text_y, 0x00007AFF, buf, scr_w);

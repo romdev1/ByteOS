@@ -128,7 +128,7 @@ static void term_exec(const char *cmdline) {
     } else if (t_streq(cmd, "pwd")) {
         term_push_line("/");
     } else if (t_streq(cmd, "whoami")) {
-        term_push_line("root@igoros-nord");
+        term_push_line("root@byteos");
     } else if (t_streq(cmd, "echo")) {
         term_push_line(rest);
     } else if (t_streq(cmd, "uptime")) {
@@ -196,7 +196,7 @@ static void term_exec(const char *cmdline) {
         l2[b2 + mi] = 0;
         term_push_line(l2);
     } else if (t_streq(cmd, "fetch") || t_streq(cmd, "neofetch")) {
-        term_push_line("  _        ___  ____    OS: IgorOS 0.5.2 (Nord x86_64)");
+        term_push_line("  _        ___  ____    OS: ByteOS 0.5.2 (x86_64)");
         term_push_line(" (_)___   / _ \\/ ___|   KERNEL: Limine Microkernel");
         term_push_line(" | / _ \\ | | | \\___ \\   HOST: PC Compatible (x86_64)");
 
@@ -326,7 +326,7 @@ void toggle_terminal_app(void)
     minimized = 0;
     dragging = 0;
     if (!booted) {
-        term_push_line("IgorOS Nord Terminal v0.5.2");
+        term_push_line("ByteOS Terminal v0.5.2");
         term_push_line("Type HELP for available commands.");
         booted = 1;
     }
@@ -437,7 +437,7 @@ void render_terminal_app_window(
     draw_rect_buf(win_x, win_y + header_h - 1, win_w, 1, 0x002C2C2E);
 
     /* Window title centered */
-    const char *title = "Terminal - root@igoros";
+    const char *title = "Terminal - root@byteos";
     int tw = font_text_width(title);
     draw_string(title, win_x + (win_w - tw) / 2, win_y + (header_h - 14) / 2, 0x00A1A1A6, buf, (uint32_t)scr_w);
 

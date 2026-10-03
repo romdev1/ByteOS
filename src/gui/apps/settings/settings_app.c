@@ -326,6 +326,6 @@ void render_settings_app_window(
 
     draw_rect_buf(win_x + 24, thumbs_y + thumb_h + 30, win_w - 48, 1, 0x00E0E0E3);
 
-    draw_string("IgorOS Nord", win_x + 24, thumbs_y + thumb_h + 48, 0x001D1D1F, buf, (uint32_t)scr_w);
-    draw_string("Built on the IgorOS 64-bit kernel", win_x + 24, thumbs_y + thumb_h + 72, 0x006E6E73, buf, (uint32_t)scr_w);
+    draw_string("ByteOS Nord", win_x + 24, thumbs_y + thumb_h + 48, 0x001D1D1F, buf, (uint32_t)scr_w);
+    draw_string("Built on the ByteOS 64-bit kernel", win_x + 24, thumbs_y + thumb_h + 72, 0x006E6E73, buf, (uint32_t)scr_w);
 }

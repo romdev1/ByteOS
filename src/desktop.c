@@ -356,7 +356,7 @@ void sys_shutdown(void)
     }
 
     const char* msg1 =
-        "igorOS has shut down.";
+        "ByteOS has shut down.";
 
     const char* msg2 =
         "It is now safe to close this window.";
@@ -1213,7 +1213,7 @@ void render_layer_topbar(int single_click)
     }
 
     draw_string(
-        "igorOS",
+        "ByteOS",
         30,
         4,
         COLOR_BLACK,
