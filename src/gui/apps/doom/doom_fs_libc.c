@@ -67,6 +67,19 @@ char *strrchr(const char *s, int c) {
     while (*s) { if (*s == (char)c) l = s; s++; }
     return (char *)l;
 }
+char *strstr(const char *haystack, const char *needle) {
+    if (!*needle) return (char *)haystack;
+    for (; *haystack; haystack++) {
+        if (*haystack == *needle) {
+            const char *h = haystack, *n = needle;
+            while (*h && *n && *h == *n) { h++; n++; }
+            if (!*n) return (char *)haystack;
+        }
+    }
+    return 0;
+}
+int errno = 0;
+int mkdir(const char *path, ...) { (void)path; return 0; }
 int toupper(int c) { return (c >= 'a' && c <= 'z') ? c - 32 : c; }
 int tolower(int c) { return (c >= 'A' && c <= 'Z') ? c + 32 : c; }
 int abs(int x) { return x < 0 ? -x : x; }
