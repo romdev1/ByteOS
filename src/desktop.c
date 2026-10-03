@@ -1989,6 +1989,7 @@ void render_layer_dock(int single_click)
             if (wid < 0 || wid >= WIN_COUNT) continue;
             if (!g_win_rect[wid].open) continue;
             int ix = g_dock_icon_x[i];
+            int isz = g_dock_icon_size[i];
             int ux = ix + isz / 2 - 3;
             int uy = icon_bottom + 2;
             draw_rounded_rect_buf(ux, uy, 6, 3, 1, 0x00FFFFFF);
