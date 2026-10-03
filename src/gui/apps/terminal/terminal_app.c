@@ -380,7 +380,7 @@ void render_terminal_app_window(
     }
 
     int header_h = 36;
-    int occluded = win_click_occluded(WIN_ID_TERMINAL, mx, my);
+    int occluded = win_click_occluded(WIN_ID_TERMINAL_, mx, my);
 
     if (single_click && !occluded && !mid_genie) {
         if (mx >= win_x && mx <= win_x + win_w && my >= win_y && my <= win_y + win_h) {
@@ -407,7 +407,7 @@ void render_terminal_app_window(
         if (win_y < 28) win_y = 28;
     }
 
-    win_report_rect(WIN_ID_TERMINAL, win_x, win_y, win_w, win_h, 1);
+    win_report_rect(WIN_ID_TERMINAL_, win_x, win_y, win_w, win_h, 1);
 
     int draw_x, draw_y, draw_w, draw_h;
     genie_get_rect(&genie, win_x, win_y, win_w, win_h, &draw_x, &draw_y, &draw_w, &draw_h);
@@ -444,7 +444,7 @@ void render_terminal_app_window(
     /* Traffic Lights */
     int min_click = 0, zoom_click = 0;
     if (win_chrome_traffic_lights(
-        WIN_ID_TERMINAL, win_x, win_y, win_w, header_h,
+        WIN_ID_TERMINAL_, win_x, win_y, win_w, header_h,
         mx, my, single_click, occluded,
         &min_click, &zoom_click
     )) {

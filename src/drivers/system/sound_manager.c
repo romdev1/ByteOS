@@ -37,6 +37,6 @@ void sound_set_volume(uint8_t vol) {
 }
 
 void sound_play_pcm(const uint16_t* samples, uint32_t count) {
-    if (active_dev == AUDIO_DEV_HDA) hda_play_pcm((const uint8_t*)samples, count * 2);
-    else if (active_dev == AUDIO_DEV_AC97) ac97_play_pcm((const uint8_t*)samples, count * 2);
+    if (active_dev == AUDIO_DEV_HDA) hda_play_pcm(samples, count);
+    else if (active_dev == AUDIO_DEV_AC97) ac97_play_pcm(samples, count);
 }
