@@ -235,49 +235,9 @@ void render_about_app_window(
        Window shadow
        ====================================== */
 
-    static const struct {
-
-        int spread;
-        int drop;
-        uint8_t alpha;
-
-    } shadows[] = {
-
-        {10, 14, 10},
-        {8,  12, 14},
-        {6,  10, 18},
-        {4,   8, 24},
-        {2,   6, 32}
-    };
-
-
-    for (
-        unsigned i = 0;
-        i < sizeof(shadows) / sizeof(shadows[0]);
-        i++
-    ) {
-
-        int sp = shadows[i].spread;
-
-        draw_rounded_rect_alpha(
-
-            win_x - sp / 2,
-
-            win_y -
-            sp / 2 +
-            shadows[i].drop,
-
-            win_w + sp,
-
-            win_h + sp,
-
-            12 + sp / 2,
-
-            0x00000000,
-
-            shadows[i].alpha
-        );
-    }
+    /* Fast, clean 2-pass soft drop shadow */
+    draw_rounded_rect_alpha(win_x - 6, win_y - 2 + 8, win_w + 12, win_h + 10, 18, 0x00000000, 24);
+    draw_rounded_rect_alpha(win_x - 2, win_y + 3,     win_w + 4,  win_h + 4,  15, 0x00000000, 42);
 
 
     /* ======================================

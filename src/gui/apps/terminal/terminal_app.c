@@ -369,7 +369,7 @@ void render_terminal_app_window(
     int single_click
 )
 {
-    (void)click;
+    int btn = click;
     if (!is_open) return;
 
     int mid_genie = genie_is_animating(&genie);
@@ -388,7 +388,7 @@ void render_terminal_app_window(
         }
     }
 
-    if (single_click && win_drag_available() && !occluded && !mid_genie) {
+    if (btn && !dragging && win_drag_available() && !occluded && !mid_genie) {
         if (mx >= win_x && mx <= (win_x + win_w - 90) && my >= win_y && my <= (win_y + header_h)) {
             win_drag_claim();
             dragging = 1;
@@ -397,14 +397,14 @@ void render_terminal_app_window(
         }
     }
 
-    if (!single_click) {
+    if (!btn) {
         dragging = 0;
     }
 
     if (dragging) {
         win_x = mx - drag_ox;
         win_y = my - drag_oy;
-        if (win_y < 28) win_y = 28;
+        if (win_y < 25) win_y = 25;
     }
 
     win_report_rect(WIN_ID_TERMINAL_, win_x, win_y, win_w, win_h, 1);
@@ -412,17 +412,9 @@ void render_terminal_app_window(
     int draw_x, draw_y, draw_w, draw_h;
     genie_get_rect(&genie, win_x, win_y, win_w, win_h, &draw_x, &draw_y, &draw_w, &draw_h);
 
-    /* Smooth drop shadow */
-    static const struct { int spread; int drop; uint8_t alpha; } shadows[] = {
-        {16, 20, 8}, {12, 16, 14}, {8, 12, 18}, {4, 8, 24}, {2, 4, 32},
-    };
-    for (unsigned i = 0; i < sizeof(shadows) / sizeof(shadows[0]); i++) {
-        int sp = shadows[i].spread;
-        draw_rounded_rect_alpha(
-            draw_x - sp / 2, draw_y - sp / 2 + shadows[i].drop,
-            draw_w + sp, draw_h + sp, 18 + sp / 2, 0x00000000, shadows[i].alpha
-        );
-    }
+    /* Fast, clean 2-pass soft drop shadow */
+    draw_rounded_rect_alpha(draw_x - 6, draw_y - 2 + 8, draw_w + 12, draw_h + 10, 22, 0x00000000, 24);
+    draw_rounded_rect_alpha(draw_x - 2, draw_y + 3,     draw_w + 4,  draw_h + 4,  19, 0x00000000, 42);
 
     /* Modern Dark Acrylic Terminal Body */
     draw_rounded_rect_buf(draw_x, draw_y, draw_w, draw_h, 18, 0x00141416);

@@ -40,13 +40,13 @@ extern const uint8_t terminal_icon_bmp_start[] __attribute__((weak));
  * g_wallpaper_choice: 0 = Waves, 1 = Day (default), 2 = Night. */
 extern const uint8_t wallpaper_day_bmp_start[] __attribute__((weak));
 extern const uint8_t wallpaper_night_bmp_start[] __attribute__((weak));
-int g_wallpaper_choice = 1;
+int g_wallpaper_choice = 0;
 
 /* Dock magnification (Settings → Dock).
  * enabled: 0 = off (fixed BASE size), 1 = on
- * level:   0..100 — how strong the grow is (default mild) */
-int g_dock_mag_enabled = 1;
-int g_dock_mag_level   = 55;  /* 0..100 */
+ * level:   0..100 — how strong the grow is */
+int g_dock_mag_enabled = 0;
+int g_dock_mag_level   = 0;
 
 
 const uint8_t* current_wallpaper_bmp(void) {
@@ -72,17 +72,17 @@ static uint32_t bg_buffer[MAX_WIDTH * MAX_HEIGHT];
 
 static void desktop_swap_buffers(void);
 
-#define COLOR_TOPBAR             0x00F6F6F6
-#define COLOR_TOPBAR_BORDER     0x00D1D1D6
-#define COLOR_BLACK             0x00000000
-#define COLOR_WHITE             0x00FFFFFF
-#define COLOR_DOCK_BG           0x00FFFFFF
-#define COLOR_DOCK_BORDER       0x00E5E5EA
-#define COLOR_TOOLTIP_BG        0x001C1C1E
-#define COLOR_MENU_BG           0x00F0F0F3
-#define COLOR_ACCENT            0x00007AFF
-#define COLOR_MENU_ITEM_HOVER   0x00E1E1E6
-#define COLOR_MENU_ITEM_PRESSED 0x00CACACF
+#define COLOR_TOPBAR             0x00D0D5DC
+#define COLOR_TOPBAR_BORDER      0x00AAB0B8
+#define COLOR_BLACK              0x001C1C1E
+#define COLOR_WHITE              0x00FFFFFF
+#define COLOR_DOCK_BG            0x00323842
+#define COLOR_DOCK_BORDER        0x005E6775
+#define COLOR_TOOLTIP_BG         0x001C1C1E
+#define COLOR_MENU_BG            0x00EAEAED
+#define COLOR_ACCENT             0x00007AFF
+#define COLOR_MENU_ITEM_HOVER    0x00D6D6DC
+#define COLOR_MENU_ITEM_PRESSED  0x00C2C2C8
 
 typedef struct {
     uint16_t type;
@@ -872,8 +872,13 @@ static void draw_scaled_bmp_rounded(
             if (src_x >= img_w) src_x = img_w - 1;
             const uint8_t* p = row + src_x * bytes_pp;
             uint8_t b = p[0], g = p[1], rv = p[2];
-            if (rv > 240 && g < 15 && b > 240) continue;
-            if (bpp == 32 && p[3] < 32) continue;
+            if (bpp == 32) {
+                if (p[3] < 24) continue;
+                if (p[3] < 240) {
+                    draw_pixel_blend(x + cx, y + cy, ((uint32_t)rv << 16) | ((uint32_t)g << 8) | b, p[3]);
+                    continue;
+                }
+            }
             draw_pixel_buf(x + cx, y + cy, ((uint32_t)rv << 16) | ((uint32_t)g << 8) | b);
         }
     }
@@ -1156,12 +1161,7 @@ void render_volume_popup(void)
 
 void render_layer_topbar(int single_click)
 {
-    /*
-     * Big Sur: строка меню полупрозрачная (просвечивает обоями), без
-     * жёсткой линии-разделителя внизу -- в отличие от Catalina/Mac OS X,
-     * где топбар был сплошным и отделялся тонкой чёткой границей.
-     */
-
+    /* Light silver translucent top bar */
     draw_rounded_rect_alpha(
         0,
         0,
@@ -1169,7 +1169,7 @@ void render_layer_topbar(int single_click)
         24,
         0,
         COLOR_TOPBAR,
-        210
+        225
     );
 
     /* Clean 1px bottom border for topbar */
@@ -1178,7 +1178,6 @@ void render_layer_topbar(int single_click)
     /*
      * Start icon / Logo button
      */
-
     int start_btn_x = 8;
     int start_btn_y = 3;
     int start_btn_w = 18;
@@ -1186,7 +1185,7 @@ void render_layer_topbar(int single_click)
 
     int hover_start = (mouse_x >= 0 && mouse_x <= 84 && mouse_y >= 0 && mouse_y <= 24);
     if (hover_start) {
-        draw_rounded_rect_buf(4, 2, 80, 20, 5, COLOR_MENU_ITEM_HOVER);
+        draw_rounded_rect_buf(4, 2, 78, 20, 4, COLOR_MENU_ITEM_HOVER);
     }
 
     if (start_icon_bmp_start)
@@ -1197,7 +1196,7 @@ void render_layer_topbar(int single_click)
             start_btn_y,
             start_btn_w,
             start_btn_h,
-            5
+            4
         );
     }
     else
@@ -1207,7 +1206,7 @@ void render_layer_topbar(int single_click)
             start_btn_y,
             start_btn_w,
             start_btn_h,
-            5,
+            4,
             COLOR_BLACK
         );
     }
@@ -1215,54 +1214,24 @@ void render_layer_topbar(int single_click)
     draw_string(
         "ByteOS",
         30,
-        4,
+        5,
         COLOR_BLACK,
         backbuffer,
         scr_width
     );
 
-    /* Active Application Title */
-    const char *active_app = "Finder";
-    if (g_win_z_order[WIN_COUNT - 1] >= 0 && g_win_rect[g_win_z_order[WIN_COUNT - 1]].open) {
-        switch (g_win_z_order[WIN_COUNT - 1]) {
-            case WIN_ID_FILE:     active_app = "Finder"; break;
-            case WIN_ID_TERMINAL: active_app = "Terminal"; break;
-            case WIN_ID_DOOM:     active_app = "DOOM"; break;
-            case WIN_ID_CALC:     active_app = "Calculator"; break;
-            case WIN_ID_SETTINGS: active_app = "Settings"; break;
-            case WIN_ID_MUSIC:    active_app = "Music"; break;
-            case WIN_ID_ABOUT:    active_app = "About"; break;
-        }
-    }
-    draw_string(active_app, 92, 4, 0x00007AFF, backbuffer, scr_width);
-
-    /* macOS menus */
-    int menu_offset = 92 + font_text_width(active_app) + 16;
-    draw_string("File", menu_offset, 4, 0x003A3A3C, backbuffer, scr_width);
-    draw_string("Edit", menu_offset + 38, 4, 0x003A3A3C, backbuffer, scr_width);
-    draw_string("View", menu_offset + 76, 4, 0x003A3A3C, backbuffer, scr_width);
-    draw_string("Window", menu_offset + 118, 4, 0x003A3A3C, backbuffer, scr_width);
-    draw_string("Help", menu_offset + 176, 4, 0x003A3A3C, backbuffer, scr_width);
-
     /*
      * Start button click
      */
-
-    if (
-        single_click &&
-        hover_start
-    )
+    if (single_click && hover_start)
     {
-        start_menu_open =
-            !start_menu_open;
-
+        start_menu_open = !start_menu_open;
         volume_popup_open = 0;
     }
 
     /*
      * RTC
      */
-
     uint64_t now_ms = timer_millis();
     if (now_ms >= next_rtc_update_ms)
     {
@@ -1271,74 +1240,65 @@ void render_layer_topbar(int single_click)
     }
 
     char datetime_str[20];
-
-    datetime_str[0] =
-        '0' +
-        (cached_day / 10);
-
-    datetime_str[1] =
-        '0' +
-        (cached_day % 10);
-
+    datetime_str[0] = '0' + (cached_day / 10);
+    datetime_str[1] = '0' + (cached_day % 10);
     datetime_str[2] = '.';
-
-    datetime_str[3] =
-        '0' +
-        (cached_month / 10);
-
-    datetime_str[4] =
-        '0' +
-        (cached_month % 10);
-
+    datetime_str[3] = '0' + (cached_month / 10);
+    datetime_str[4] = '0' + (cached_month % 10);
     datetime_str[5] = ' ';
-
-    datetime_str[6] =
-        '0' +
-        (cached_h / 10);
-
-    datetime_str[7] =
-        '0' +
-        (cached_h % 10);
-
+    datetime_str[6] = '0' + (cached_h / 10);
+    datetime_str[7] = '0' + (cached_h % 10);
     datetime_str[8] = ':';
-
-    datetime_str[9] =
-        '0' +
-        (cached_m / 10);
-
-    datetime_str[10] =
-        '0' +
-        (cached_m % 10);
-
+    datetime_str[9] = '0' + (cached_m / 10);
+    datetime_str[10] = '0' + (cached_m % 10);
     datetime_str[11] = 0;
 
-    int clock_x =
-        scr_width - 120;
-
+    int clock_x = scr_width - 105;
     draw_string(
         datetime_str,
         clock_x,
-        4,
+        5,
         COLOR_BLACK,
         backbuffer,
         scr_width
     );
 
-    /* Power status */
-    int pwr_x = clock_x - 76;
-    draw_string("PWR 100%", pwr_x, 4, 0x0034C759, backbuffer, scr_width);
+    /*
+     * Battery icon + percentage (matches photo1.png)
+     */
+    int bat_w = 20;
+    int bat_h = 11;
+    int bat_x = clock_x - 62;
+    int bat_y = 6;
+
+    /* Battery outline */
+    draw_rounded_rect_buf(bat_x, bat_y, bat_w, bat_h, 2, 0x0048484A);
+    /* Terminal nipple */
+    draw_rect_buf(bat_x + bat_w, bat_y + 3, 2, 5, 0x0048484A);
+    /* Battery fill (~70% charge) */
+    draw_rect_buf(bat_x + 2, bat_y + 2, 12, bat_h - 4, 0x0034C759);
+
+    draw_string(
+        "70%",
+        bat_x + bat_w + 5,
+        5,
+        COLOR_BLACK,
+        backbuffer,
+        scr_width
+    );
 
     /*
      * Volume
      */
-
-    int vol_btn_x =
-        scr_width - 205;
-
-    int vol_btn_y = 3;
-
     int vol_btn_w = 18;
     int vol_btn_h = 18;
+    int vol_btn_x = bat_x - 74;
+    int vol_btn_y = 3;
+
+    int hover_vol = (mouse_x >= vol_btn_x - 4 && mouse_x <= vol_btn_x + 54 && mouse_y >= 0 && mouse_y <= 24);
+    if (hover_vol) {
+        draw_rounded_rect_buf(vol_btn_x - 4, 2, 56, 20, 4, COLOR_MENU_ITEM_HOVER);
+    }
 
     if (volume_bmp_start)
     {
@@ -1348,7 +1308,7 @@ void render_layer_topbar(int single_click)
             vol_btn_y,
             vol_btn_w,
             vol_btn_h,
-            5
+            4
         );
     }
     else
@@ -1358,17 +1318,13 @@ void render_layer_topbar(int single_click)
             vol_btn_y,
             vol_btn_w,
             vol_btn_h,
-            5,
+            4,
             0x008E8E93
         );
     }
 
     char vol_str[8];
-
     int idx = 0;
-
-    vol_str[idx++] = ' ';
-
     if (current_volume == 100)
     {
         vol_str[idx++] = '1';
@@ -1379,23 +1335,17 @@ void render_layer_topbar(int single_click)
     {
         if (current_volume >= 10)
         {
-            vol_str[idx++] =
-                '0' +
-                (current_volume / 10);
+            vol_str[idx++] = '0' + (current_volume / 10);
         }
-
-        vol_str[idx++] =
-            '0' +
-            (current_volume % 10);
+        vol_str[idx++] = '0' + (current_volume % 10);
     }
-
     vol_str[idx++] = '%';
     vol_str[idx] = 0;
 
     draw_string(
         vol_str,
         vol_btn_x + 22,
-        4,
+        5,
         COLOR_BLACK,
         backbuffer,
         scr_width
@@ -1404,18 +1354,9 @@ void render_layer_topbar(int single_click)
     /*
      * Volume click
      */
-
-    if (
-        single_click &&
-        mouse_x >= vol_btn_x &&
-        mouse_x <= vol_btn_x + 65 &&
-        mouse_y >= 0 &&
-        mouse_y <= 24
-    )
+    if (single_click && hover_vol)
     {
-        volume_popup_open =
-            !volume_popup_open;
-
+        volume_popup_open = !volume_popup_open;
         start_menu_open = 0;
     }
 }
@@ -1912,25 +1853,20 @@ void render_layer_dock(int single_click)
      * до blur/заливки) -- получается плавно растушёванная тень вместо
      * жёсткого края.
      */
-    /* Cheap dock chrome: 2 soft shadow layers + flat frosted panel.
-     * Full box-blur every frame was a major FPS killer. */
+    /* Cheap dock chrome: soft shadow + dark acrylic frosted panel */
     draw_rounded_rect_alpha(
-        dock_panel_x - 6, dock_panel_y - 2 + 6,
-        dock_panel_w + 12, dock_panel_h + 10,
-        dock_corner_r + 4, 0x00000000, 28);
-    draw_rounded_rect_alpha(
-        dock_panel_x - 2, dock_panel_y + 2,
-        dock_panel_w + 4, dock_panel_h + 4,
-        dock_corner_r + 1, 0x00000000, 40);
+        dock_panel_x - 3, dock_panel_y + 3,
+        dock_panel_w + 6, dock_panel_h + 3,
+        dock_corner_r + 2, 0x00000000, 45);
 
     draw_rounded_rect_alpha(
         dock_panel_x - 1, dock_panel_y - 1,
         dock_panel_w + 2, dock_panel_h + 2,
-        dock_corner_r + 1, COLOR_DOCK_BORDER, 50);
+        dock_corner_r + 1, COLOR_DOCK_BORDER, 160);
     draw_rounded_rect_alpha(
         dock_panel_x, dock_panel_y,
         dock_panel_w, dock_panel_h,
-        dock_corner_r, COLOR_DOCK_BG, 70);
+        dock_corner_r, COLOR_DOCK_BG, 185);
 
     int hovered_idx = -1;
     static int icon_positions[16]; /* реальный x каждой иконки в этом кадре, для тултипа */
@@ -2053,10 +1989,9 @@ void render_layer_dock(int single_click)
             if (wid < 0 || wid >= WIN_COUNT) continue;
             if (!g_win_rect[wid].open) continue;
             int ix = g_dock_icon_x[i];
-            int isz = g_dock_icon_size[i];
-            int ux = ix + isz / 2 - 4;
-            int uy = icon_bottom + 3;
-            draw_rounded_rect_buf(ux, uy, 8, 3, 2, 0x00FFFFFF);
+            int ux = ix + isz / 2 - 3;
+            int uy = icon_bottom + 2;
+            draw_rounded_rect_buf(ux, uy, 6, 3, 1, 0x00FFFFFF);
         }
     }
 
@@ -2166,6 +2101,13 @@ void refresh_wallpaper(void)
     if (g_wallpaper_choice == g_wallpaper_drawn_choice)
         return;
 
+    uint32_t total_pixels = scr_width * scr_height;
+    if (total_pixels > MAX_WIDTH * MAX_HEIGHT)
+        total_pixels = MAX_WIDTH * MAX_HEIGHT;
+
+    for (uint32_t i = 0; i < total_pixels; i++)
+        bg_buffer[i] = 0x00000000;
+
     if (current_wallpaper_bmp())
     {
         draw_bmp_stretched(
@@ -2177,10 +2119,6 @@ void refresh_wallpaper(void)
     }
     else
     {
-        uint32_t total_pixels = scr_width * scr_height;
-        if (total_pixels > MAX_WIDTH * MAX_HEIGHT)
-            total_pixels = MAX_WIDTH * MAX_HEIGHT;
-
         for (uint32_t i = 0; i < total_pixels; i++)
             bg_buffer[i] = 0x001E1E22;
     }
